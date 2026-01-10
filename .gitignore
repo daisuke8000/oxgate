@@ -1,0 +1,75 @@
+# Rust build artifacts
+target/
+Cargo.lock
+
+# Debug and release builds
+debug/
+release/
+
+# Backup files
+*.bk
+*.backup
+**/*.rs.bk
+
+# Environment and configuration
+.env
+.env.local
+.env.*.local
+
+# IDE - IntelliJ IDEA
+.idea/
+*.iml
+*.ipr
+*.iws
+out/
+
+# IDE - VS Code
+.vscode/
+*.code-workspace
+
+# IDE - Other
+.project
+.classpath
+.settings/
+*.sublime-project
+*.sublime-workspace
+
+# OS - macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# OS - Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+Desktop.ini
+
+# OS - Linux
+*~
+.directory
+.Trash-*
+
+# Documentation builds
+/doc
+book/
+
+# Test coverage
+tarpaulin-report.html
+cobertura.xml
+lcov.info
+
+# Profiling and benchmarking
+perf.data
+perf.data.old
+flamegraph.svg
+*.profdata
+
+# Temporary files
+*.swp
+*.swo
+*.tmp
+*.temp
+.#*
