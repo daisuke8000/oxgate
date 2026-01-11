@@ -73,3 +73,7 @@ flamegraph.svg
 *.tmp
 *.temp
 .#*
+
+# AI assistants
+.claude/
+CLAUDE.md
