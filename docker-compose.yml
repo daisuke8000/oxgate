@@ -1,0 +1,109 @@
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:17-alpine
+    container_name: oxgate-postgres
+    environment:
+      POSTGRES_USER: oxgate
+      POSTGRES_PASSWORD: oxgate_dev_password
+      POSTGRES_DB: oxgate
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U oxgate"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - oxgate-network
+
+  # Ory Hydra (OAuth2 Server)
+  hydra-migrate:
+    image: oryd/hydra:v2.2.0
+    container_name: oxgate-hydra-migrate
+    environment:
+      DSN: postgres://oxgate:oxgate_dev_password@postgres:5432/oxgate?sslmode=disable
+    command: migrate sql -e --yes
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - oxgate-network
+
+  hydra:
+    image: oryd/hydra:v2.2.0
+    container_name: oxgate-hydra
+    environment:
+      DSN: postgres://oxgate:oxgate_dev_password@postgres:5432/oxgate?sslmode=disable
+      URLS_SELF_ISSUER: http://localhost:4444
+      URLS_CONSENT: http://localhost:3000/consent
+      URLS_LOGIN: http://localhost:3000/login
+      URLS_LOGOUT: http://localhost:3000/logout
+      URLS_ERROR: http://localhost:3000/error
+      SERVE_COOKIES_SAME_SITE_MODE: Lax
+      SECRETS_SYSTEM: youReallyNeedToChangeThis
+      OIDC_SUBJECT_IDENTIFIERS_SUPPORTED_TYPES: public,pairwise
+      OIDC_SUBJECT_IDENTIFIERS_PAIRWISE_SALT: youReallyNeedToChangeThis
+    command: serve all --dev
+    ports:
+      - "4444:4444"  # Public API
+      - "4445:4445"  # Admin API
+    depends_on:
+      hydra-migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:4445/health/ready"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    networks:
+      - oxgate-network
+
+  # oxgate-api (Rust Backend)
+  oxgate-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: oxgate-api
+    environment:
+      DATABASE_URL: postgres://oxgate:oxgate_dev_password@postgres:5432/oxgate
+      HYDRA_ADMIN_URL: http://hydra:4445
+      HOST: 0.0.0.0
+      PORT: 8080
+      RUST_LOG: info,oxgate=debug
+      TOTP_ISSUER: oxgate
+      ENCRYPTION_KEY: "YXNkZmFzZGZhc2RmYXNkZmFzZGZhc2RmYXNkZmFzZGY="  # Base64 32 bytes (change in production)
+      OAUTH_STATE_SECRET: "YXNkZmFzZGZhc2RmYXNkZmFzZGZhc2RmYXNkZmFzZGY="  # Base64 32 bytes (change in production)
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      hydra:
+        condition: service_healthy
+    networks:
+      - oxgate-network
+
+  # oxgate-web (Next.js Frontend)
+  oxgate-web:
+    build:
+      context: ./oxgate-web
+      dockerfile: Dockerfile
+    container_name: oxgate-web
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8080
+    ports:
+      - "3000:3000"
+    depends_on:
+      - oxgate-api
+    networks:
+      - oxgate-network
+
+volumes:
+  postgres_data:
+
+networks:
+  oxgate-network:
+    driver: bridge
