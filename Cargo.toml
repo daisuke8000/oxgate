@@ -12,9 +12,30 @@ garde = { version = "0.22.1", features = ["derive"] }
 reqwest = { version = "0.13.1", features = ["json"] }
 secrecy = { version = "0.10.3", features = ["serde"] }
 serde = { version = "1.0.228", features = ["derive"] }
+serde_json = "1.0.149"
 sqlx = { version = "0.8.6", features = ["runtime-tokio", "postgres", "uuid", "time"] }
 thiserror = "2.0.17"
-tokio = { version = "1.49.0", features = ["rt-multi-thread", "macros"] }
+time = { version = "0.3", features = ["serde", "serde-human-readable"] }
+tokio = { version = "1.49.0", features = ["rt-multi-thread", "macros", "signal"] }
 tracing = "0.1.44"
-tracing-subscriber = "0.3.22"
+tracing-subscriber = { version = "0.3.22", features = ["json", "env-filter"] }
 uuid = { version = "1.19.0", features = ["v4", "serde"] }
+
+# Password reset dependencies
+rand = "0.8"
+sha2 = "0.10"
+base64 = "0.22"
+lettre = { version = "0.11", features = ["tokio1-native-tls", "builder"], optional = true }
+
+# 2FA (TOTP) dependencies
+aes-gcm = "0.10"
+data-encoding = "2.6"
+totp-rs = { version = "5.6", features = ["otpauth", "qr"] }
+
+# Social login (OAuth2) dependencies
+oauth2 = { version = "4.4", features = ["native-tls"] }
+urlencoding = "2.1"
+
+[features]
+default = []
+email = ["lettre"]
