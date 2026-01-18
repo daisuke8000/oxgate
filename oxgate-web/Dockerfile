@@ -2,7 +2,7 @@ FROM oven/bun:1 AS builder
 
 WORKDIR /app
 
-COPY package.json bun.lockb* ./
+COPY package.json bun.lock* ./
 RUN bun install --frozen-lockfile
 
 COPY . .
@@ -12,8 +12,8 @@ FROM oven/bun:1-alpine
 
 WORKDIR /app
 
-RUN addgroup -g 1000 nextjs && \
-    adduser -D -u 1000 -G nextjs nextjs
+RUN addgroup -S nextjs && \
+    adduser -S -G nextjs nextjs
 
 COPY --from=builder --chown=nextjs:nextjs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nextjs /app/.next/static ./.next/static

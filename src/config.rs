@@ -10,6 +10,12 @@ pub struct Config {
     #[serde(default = "default_port")]
     pub port: u16,
 
+    // CORS設定
+    /// 許可するオリジン（カンマ区切り、空の場合は全オリジン許可）
+    /// 例: "https://example.com,https://admin.example.com"
+    #[serde(default)]
+    pub allowed_origins: Option<String>,
+
     // SMTP設定（オプション - email機能有効時のみ使用）
     #[serde(default)]
     pub smtp_host: Option<String>,
@@ -75,5 +81,19 @@ fn default_password_reset_token_ttl_secs() -> i64 {
 impl Config {
     pub fn load() -> Result<Self, envy::Error> {
         envy::from_env()
+    }
+
+    /// 許可するオリジンのリストを取得
+    ///
+    /// - `allowed_origins` が設定されていない場合は `None` を返す（全オリジン許可）
+    /// - 設定されている場合はカンマ区切りでパースしてリストを返す
+    pub fn get_allowed_origins(&self) -> Option<Vec<String>> {
+        self.allowed_origins.as_ref().map(|origins| {
+            origins
+                .split(',')
+                .map(|s| s.trim().to_string())
+                .filter(|s| !s.is_empty())
+                .collect()
+        })
     }
 }

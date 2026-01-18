@@ -1,0 +1,14 @@
+{
+  "name": "oxgate-sample-client",
+  "version": "0.1.0",
+  "scripts": {
+    "dev": "bun run server.ts",
+    "setup": "bun run setup.ts"
+  },
+  "dependencies": {
+    "hono": "^4"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.3.6"
+  }
+}

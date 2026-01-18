@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
@@ -22,7 +21,6 @@ import Link from "next/link";
 import { CheckCircle2 } from "lucide-react";
 
 export default function RegisterPage() {
-  const router = useRouter();
   const [error, setError] = useState<string>("");
   const [success, setSuccess] = useState(false);
 
@@ -63,17 +61,11 @@ export default function RegisterPage() {
             </div>
             <CardTitle className="text-center">登録完了</CardTitle>
             <CardDescription className="text-center">
-              アカウントが正常に作成されました
+              アカウントが正常に作成されました。
+              <br />
+              ご利用のアプリケーションに戻り、ログインしてください。
             </CardDescription>
           </CardHeader>
-          <CardContent>
-            <Button
-              className="w-full"
-              onClick={() => router.push("/login")}
-            >
-              ログインページへ
-            </Button>
-          </CardContent>
         </Card>
       </div>
     );

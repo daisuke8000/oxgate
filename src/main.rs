@@ -4,9 +4,11 @@ use axum::{
     Router,
     routing::{get, post},
 };
+use http::{HeaderValue, Method};
 use secrecy::ExposeSecret;
 use sqlx::postgres::PgPoolOptions;
 use tokio::net::TcpListener;
+use tower_http::cors::{AllowOrigin, Any, CorsLayer};
 use tracing_subscriber::{EnvFilter, layer::SubscriberExt, util::SubscriberInitExt};
 
 use oxgate::{config::Config, handlers, services::hydra::HydraClient, state::AppState};
@@ -95,6 +97,9 @@ fn init_tracing() {
 
 /// Router の構築
 fn create_router(state: AppState) -> Router {
+    // CORS設定
+    let cors = build_cors_layer(&state);
+
     Router::new()
         .route("/api/health", get(handlers::health_check))
         .route("/api/login", post(handlers::login))
@@ -116,7 +121,49 @@ fn create_router(state: AppState) -> Router {
         .route("/api/oauth/google/callback", get(handlers::google_callback))
         .route("/api/oauth/github", get(handlers::github_auth))
         .route("/api/oauth/github/callback", get(handlers::github_callback))
+        .layer(cors)
         .with_state(state)
+}
+
+/// CORS レイヤーを構築
+///
+/// - `ALLOWED_ORIGINS` が設定されている場合: 指定されたオリジンのみ許可
+/// - 設定されていない場合: 全オリジン許可（開発環境向け）
+fn build_cors_layer(state: &AppState) -> CorsLayer {
+    let allowed_methods = [
+        Method::GET,
+        Method::POST,
+        Method::PUT,
+        Method::DELETE,
+        Method::OPTIONS,
+    ];
+
+    match state.config.get_allowed_origins() {
+        Some(origins) if !origins.is_empty() => {
+            // 本番環境: 指定されたオリジンのみ許可
+            let origins: Vec<HeaderValue> = origins
+                .iter()
+                .filter_map(|o| o.parse().ok())
+                .collect();
+
+            tracing::info!(origins = ?state.config.allowed_origins, "CORS: 指定オリジンを許可");
+
+            CorsLayer::new()
+                .allow_origin(AllowOrigin::list(origins))
+                .allow_methods(allowed_methods)
+                .allow_headers(Any)
+                .allow_credentials(true)
+        }
+        _ => {
+            // 開発環境: 全オリジン許可
+            tracing::warn!("CORS: 全オリジン許可（開発環境設定）");
+
+            CorsLayer::new()
+                .allow_origin(Any)
+                .allow_methods(allowed_methods)
+                .allow_headers(Any)
+        }
+    }
 }
 
 /// Graceful shutdown シグナル待機
